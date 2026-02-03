@@ -54,9 +54,9 @@ async def start(interaction: discord.Interaction, device: str):
          #need mac failsafe if wrong
          if mac_validation == True:
             if(re.search(regex_ip, ip_addr)):
-                #if ip wrong, default 255.255.255.255
+                #if ip wrong, default ip 255.255.255.255
                 port_validation = int(port_addr) in range(0, 65536)
-                #if empty, default to 9
+                #if empty, default to port 9
                 if port_validation ==  True:  
                         send_magic_packet(mac_addr, ip_address=str(ip_addr), port=int(port_addr))
                         await interaction.response.send_message(str("Magic Packet was sent to " + device))
