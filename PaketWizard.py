@@ -1,4 +1,4 @@
-# bot.py
+#bot.py
 import os
 import os.path
 import re
@@ -6,9 +6,6 @@ import discord
 from wakeonlan import send_magic_packet
 from discord.ext import commands
 from dotenv import load_dotenv
-
-
-#regex_ip = "^((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])$"
 
 load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN", "")
@@ -20,6 +17,9 @@ class Bot(commands.Bot):
         await self.tree.sync()
 
 bot = Bot(command_prefix="!", case_insensitive=False, intents=intents)
+regex_ip = r"^((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])$"
+#regex_mac = r"'[\:\-]'.join(['([0-9a-f]{2})']*6)$"
+regex_mac = r"^([0-9a-f]{2}[:-]){5}[0-9a-f]{2}$"
 
 
 @bot.event
@@ -33,42 +33,45 @@ async def files(interaction: discord.Interaction):
     if not files:
         await interaction.response.send_message("no Device found")
         return
-    message = "\n".join(files)
-    await interaction.response.send_message(message)
+    files_message = "\n".join(files)
+    await interaction.response.send_message(files_message)
 
 
 
 @bot.tree.command(name="start", description="Send packet to selected file")
 async def start(interaction: discord.Interaction, device: str):
-    await interaction.response.send_message("OK", ephemeral=True)
+      file_path = ("./devices/" + device)
+      if os.path.isfile(file_path):
+         variables = {}
+         with open(file_path, 'r') as f:
+            for line in f:
+                name, value = line.split("=")
+                variables[name] = str(value)
+         mac_addr = variables["mac_addr"].strip("\n")
+         ip_addr = variables["ip_addr"].strip("\n")
+         port_addr = variables["port_addr"].strip("\n")
+         mac_validation = bool (re.fullmatch(regex_mac, mac_addr.lower()))
+         #need mac failsafe if wrong
+         if mac_validation == True:
+            if(re.search(regex_ip, ip_addr)):
+                #if ip wrong, default 255.255.255.255
+                port_validation = int(port_addr) in range(0, 65536)
+                #if empty, default to 9
+                if port_validation ==  True:  
+                        send_magic_packet(mac_addr, ip_address=str(ip_addr), port=int(port_addr))
+                        await interaction.response.send_message(str("Magic Packet was sent to " + device))
+                else:
+                    await interaction.response.send_message("Invalid Port")
+            else:
+                await interaction.response.send_message("Invalid IP-Address")     
+         else:
+            await interaction.response.send_message("Invalid MAC-Address")                             
+      else:
+        await interaction.response.send_message("File does not exist")
 
-#async def device (interaction: discord.Interaction):
-    
-#    file_path = ("./devices/" + arg)
-#    if os.path.isfile(file_path):
-#        variables = {}
-#        with open(file_path, 'r') as f:
-#            for line in f:
-#                name, value = line.split("=")
-#                variables[name] = str(value)
-#        mac_addr = variables["mac_addr"].strip("\n")
-#        ip_addr = variables["ip_addr"].strip("\n")
-#        port_addr = variables["port_addr"].strip("\n")
-#        mac_validation = bool(re.match('^' + '[\:\-]'.join(['([0-9a-f]{2})']*6) + '$', mac_addr.lower()))
-#        if mac_validation == True:
-#            if(re.search(regex_ip, ip_addr)):
-#                port_validation = int(port_addr) in range(0, 65536)
-#                if port_validation ==  True:  
-#                        send_magic_packet(mac_addr, ip_address=str(ip_addr), port=int(port_addr))
-#                        await ctx.send(str("Magic Packet was sent to " + arg))
-#                else:
-#                    await ctx.send("Invalid Port")
-#            else:
-#                await ctx.send("Invalid IP-Address")     
-#        else:
-#            await ctx.send("Invalid MAC-Address")                             
-#    else:
-#        await ctx.send("File does not exist")
+@bot.tree.command(name="custom", description="Send packet to custom Device")
+async def custom(interaction: discord.Interaction, device: str):
+    await interaction.response.send_message("OK", ephemeral=True)
    
 #@bot.command()
 #async def custom(ctx, custom_mac, custom_ip = "255.255.255.255", custom_port = "9"):
