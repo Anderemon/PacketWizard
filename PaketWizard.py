@@ -45,23 +45,46 @@ async def start(interaction: discord.Interaction, device: str):
          variables = {}
          with open(file_path, 'r') as f:
             for line in f:
-                name, value = line.split("=")
-                variables[name] = str(value)
-         mac_addr = variables["mac_addr"].strip("\n")
-         ip_addr = variables["ip_addr"].strip("\n")
-         port_addr = variables["port_addr"].strip("\n")
+                line = line.strip()
+                if not line:
+                    continue
+                if "=" not in line:
+                    continue
+                name, value = line.split("=",1)
+                variables[name.strip()] = value.strip()
+
+
+        # mac_addr = variables["mac_addr"].strip("\n")
+
+         mac_addr = variables.get("mac_addr")
+
+         if mac_addr is None or not mac_addr.strip():
+              await interaction.response.send_message("No MAC address defined in device file.")
+              return
+         mac_addr = mac_addr.strip()
+      
+      #  ip_addr = variables.get("ip_addr","255.255.255.255")
+
+         
+         ip_addr = variables.get("ip_addr","255.255.255.255")
+         port_addr = variables.get("port_addr","9")
          mac_validation = bool (re.fullmatch(regex_mac, mac_addr.lower()))
-         #need mac failsafe if wrong
+         #need mac failsafe if wron
          if mac_validation == True:
             if(re.search(regex_ip, ip_addr)):
-                #if ip wrong, default ip 255.255.255.255
-                port_validation = int(port_addr) in range(0, 65536)
+                try:
+                    port = int(port_addr)
+                    if not (1 <= port <= 65535):
+                        raise ValueError
+                except (TypeError, ValueError):
+                 port = 9
                 #if empty, default to port 9
-                if port_validation ==  True:  
-                        send_magic_packet(mac_addr, ip_address=str(ip_addr), port=int(port_addr))
-                        await interaction.response.send_message(str("Magic Packet was sent to " + device))
-                else:
-                    await interaction.response.send_message("Invalid Port")
+                #if port ==  True:  
+                send_magic_packet(mac_addr, ip_address=str(ip_addr), port=int(port))
+                #output test
+                await interaction.response.send_message(str("Magic Packet was sent to " + device + " - " + mac_addr + " - " + ip_addr + " - " + str(port)))
+                #else:
+                    #await interaction.response.send_message("Invalid Port")
             else:
                 await interaction.response.send_message("Invalid IP-Address")     
          else:
