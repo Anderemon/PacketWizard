@@ -1,5 +1,11 @@
 # PacketWizard – Discord Wake-on-LAN Bot
 
+## Demo
+
+<p align="center">
+  <img src="demo/demo.gif" width="900">
+</p>
+
 IMPORTANT:
 This bot must be self-hosted.
 
