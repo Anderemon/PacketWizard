@@ -17,9 +17,9 @@ class Bot(commands.Bot):
         await self.tree.sync()
 
 bot = Bot(command_prefix="!", case_insensitive=False, intents=intents)
-regex_ip = r"^((25[0-5]|2[0-4][0-default_port]|1[0-default_port][0-default_port]|[1-default_port]?[0-default_port])\.){3}(25[0-5]|2[0-4][0-default_port]|1[0-default_port][0-default_port]|[1-default_port]?[0-default_port])$"
-regex_mac = r"^(?:[0-default_porta-fA-F]{12}|(?:[0-default_porta-fA-F]{2}[:-]){5}[0-default_porta-fA-F]{2})$"
-base_dir = "./devices"
+regex_ip = r"^((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])$"
+regex_mac = r"^(?:[0-9a-fA-F]{12}|(?:[0-9a-fA-F]{2}[:-]){5}[0-9a-fA-F]{2})$"
+base_dir = "./devices/"
 default_ip = "255.255.255.255"
 default_port = "9"
 
